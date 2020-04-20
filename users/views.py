@@ -1,7 +1,8 @@
+from django.forms import model_to_dict
 from django.http import HttpResponse, JsonResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import CreateView
+from django.views.generic import CreateView, DetailView
 
 from users.models import Human
 
@@ -58,4 +59,11 @@ class HumanView(CreateView):
         response = {"error": msg}
         return JsonResponse(response, status=400)
 
-# class HumanDetailView()
+
+class HumanDetailView(DetailView):
+    model = Human
+
+    def get(self, request, *args, **kwargs):
+        data = model_to_dict(self.get_object())
+        data['avatar'] = data['avatar'].url
+        return JsonResponse(data, status=200)
