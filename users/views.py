@@ -27,18 +27,18 @@ class HumanView(CreateView):
             self.object = form.save()
             return HttpResponse(status=204)
         else:
-            return HttpResponse(status=400)
+            return error_response(form.errors.get_json_data())
 
     def get(self, request, *args, **kwargs):
         try:
             page = int(request.GET.get('page', 0))
-        except ValueError:
-            return self.error_response("page must be integer")
+        except ValueError as error:
+            return error_response(error)
 
         pages_number, data = self.get_objects_by_page(page)
 
         if page > pages_number and len(data) == 0:
-            return self.error_response("page out of range")
+            return error_response("page out of range")
 
         response = {
             "page": page,
@@ -74,15 +74,15 @@ class HumanDetailView(UpdateView):
         return JsonResponse(data, status=200)
 
     def put(self, request, *args, **kwargs):
-        object = self.model.objects.get(pk=kwargs['pk'])
+        human = self.model.objects.get(pk=kwargs['pk'])
         for field, value in QueryDict(request.body).items():
-            setattr(object, field, value)
+            setattr(human, field, value)
 
         try:
-            object.save()
+            human.save()
             return HttpResponse(status=204)
-        except ValueError as e:
-            return JsonResponse({"error": str(e)}, status=400)
+        except ValueError as error:
+            return error_response(error)
 
     def delete(self, request, *args, **kwargs):
         try:
