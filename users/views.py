@@ -1,8 +1,8 @@
 from django.forms import model_to_dict
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, QueryDict
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import CreateView, DetailView
+from django.views.generic import CreateView, UpdateView
 
 from users.models import Human
 
@@ -60,10 +60,24 @@ class HumanView(CreateView):
         return JsonResponse(response, status=400)
 
 
-class HumanDetailView(DetailView):
+@method_decorator(csrf_exempt, name='dispatch')
+class HumanDetailView(UpdateView):
     model = Human
+    http_method_names = ['get', 'put']
+    content_type = ['application/json']
 
     def get(self, request, *args, **kwargs):
         data = model_to_dict(self.get_object())
         data['avatar'] = data['avatar'].url
         return JsonResponse(data, status=200)
+
+    def put(self, request, *args, **kwargs):
+        object = self.model.objects.get(pk=kwargs['pk'])
+        for field, value in QueryDict(request.body).items():
+            setattr(object, field, value)
+
+        try:
+            object.save()
+            return HttpResponse(status=204)
+        except ValueError as e:
+            return JsonResponse({"error": str(e)}, status=400)
