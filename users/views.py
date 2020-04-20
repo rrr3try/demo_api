@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.forms import model_to_dict
 from django.http import HttpResponse, JsonResponse, QueryDict
 from django.utils.decorators import method_decorator
@@ -5,6 +6,11 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import CreateView, UpdateView
 
 from users.models import Human
+
+
+def error_response(msg, status=400):
+    response = {"error": str(msg)}
+    return JsonResponse(response, status=status)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -55,15 +61,11 @@ class HumanView(CreateView):
         data = Human.objects.all()[start:end]
         return pages_number, list(data.values())
 
-    def error_response(self, msg):
-        response = {"error": msg}
-        return JsonResponse(response, status=400)
-
 
 @method_decorator(csrf_exempt, name='dispatch')
 class HumanDetailView(UpdateView):
     model = Human
-    http_method_names = ['get', 'put']
+    http_method_names = ['get', 'put', 'delete']
     content_type = ['application/json']
 
     def get(self, request, *args, **kwargs):
@@ -81,3 +83,9 @@ class HumanDetailView(UpdateView):
             return HttpResponse(status=204)
         except ValueError as e:
             return JsonResponse({"error": str(e)}, status=400)
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            self.model.objects.get(pk=kwargs['pk']).delete()
+        except ObjectDoesNotExist as error:
+            return error_response(error, status=410)
