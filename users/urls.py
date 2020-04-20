@@ -5,5 +5,5 @@ from users import views
 app_name = 'users'
 
 urlpatterns = [
-    path('human', views.HumanCreateView.as_view(), name='create'),
+    path('human', views.HumanView.as_view(), name='operate'),
 ]
