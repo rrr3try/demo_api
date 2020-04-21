@@ -5,16 +5,12 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import CreateView, UpdateView
 
+from demo.logic import CustomLogicMixin
 from users.models import Human
 
 
-def error_response(msg, status=400):
-    response = {"error": str(msg)}
-    return JsonResponse(response, status=status)
-
-
 @method_decorator(csrf_exempt, name='dispatch')
-class HumanView(CreateView):
+class HumanView(CustomLogicMixin, CreateView):
     model = Human
     http_method_names = ['post', 'get']
     content_type = ['multipart/form-data', 'application/json']
@@ -27,40 +23,16 @@ class HumanView(CreateView):
             self.object = form.save()
             return HttpResponse(status=204)
         else:
-            return error_response(form.errors.get_json_data())
-
-    def get(self, request, *args, **kwargs):
-        try:
-            page = int(request.GET.get('page', 0))
-        except ValueError as error:
-            return error_response(error)
-
-        pages_number, data = self.get_objects_by_page(page)
-
-        if page > pages_number and len(data) == 0:
-            return error_response("page out of range")
-
-        response = {
-            "page": page,
-            "pages_number": pages_number,
-            "data": data,
-        }
-        return JsonResponse(response, status=200)
+            return self.error_response(form.errors.get_json_data())
 
     def get_objects_by_page(self, page):
-        start = page * self.paginate_by
-        end = (page + 1) * self.paginate_by
-
-        number = Human.objects.count()
-        if end >= number:
-            end = number
-        pages_number = number // self.paginate_by + 1
-        if (number < pages_number) or (number == self.paginate_by):
-            pages_number = 0
-
-        data = Human.objects.all()[start:end]
-        return pages_number, list(data.values())
-
+        pages_number, query_set = super().get_objects_by_page(page)
+        serialized = []
+        for entry in query_set.values():
+            temp = model_to_dict(entry)
+            temp['avatar'] = entry.avatar.url
+            serialized.append(temp)
+        return pages_number, serialized
 
 @method_decorator(csrf_exempt, name='dispatch')
 class HumanDetailView(UpdateView):
@@ -82,10 +54,10 @@ class HumanDetailView(UpdateView):
             human.save()
             return HttpResponse(status=204)
         except ValueError as error:
-            return error_response(error)
+            return self.error_response(error)
 
     def delete(self, request, *args, **kwargs):
         try:
             self.model.objects.get(pk=kwargs['pk']).delete()
         except ObjectDoesNotExist as error:
-            return error_response(error, status=410)
+            return self.error_response(error, status=410)

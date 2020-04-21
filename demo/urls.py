@@ -18,10 +18,12 @@ from django.contrib import admin
 from django.urls import include, path
 
 from demo import settings
+from match import urls as match_urls
 from users import urls as users_urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/', include(match_urls, namespace='match')),
     path('api/', include(users_urls, namespace='users')),
 ]
 
