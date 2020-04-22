@@ -1,9 +1,9 @@
 from rest_framework.serializers import ModelSerializer
 
-from users.models import Human
+from match.models import Match
 
 
-class HumanSerializer(ModelSerializer):
+class MatchSerializer(ModelSerializer):
     class Meta:
-        model = Human
+        model = Match
         fields = '__all__'
