@@ -28,11 +28,12 @@ class HumanView(CustomLogicMixin, CreateView):
     def get_objects_by_page(self, page):
         pages_number, query_set = super().get_objects_by_page(page)
         serialized = []
-        for entry in query_set.values():
+        for entry in query_set:
             temp = model_to_dict(entry)
             temp['avatar'] = entry.avatar.url
             serialized.append(temp)
         return pages_number, serialized
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class HumanDetailView(UpdateView):
