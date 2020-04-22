@@ -4,9 +4,19 @@ from django.http import HttpResponse, JsonResponse, QueryDict
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import CreateView, UpdateView
+from rest_framework import generics
 
 from demo.logic import CustomLogicMixin
 from users.models import Human
+
+
+# ViewSets define the view behavior.
+from users.serializers import HumanSerializer
+
+
+class HumanCreateView(generics.CreateAPIView):
+    queryset = Human.objects.all()
+    serializer_class = HumanSerializer
 
 
 @method_decorator(csrf_exempt, name='dispatch')

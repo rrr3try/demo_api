@@ -16,13 +16,20 @@ Including another URLconf
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
+from rest_framework import routers
 
 from demo import settings
 from match import urls as match_urls
 from users import urls as users_urls
+from users.views import HumanCreateView
+
+
+router = routers.DefaultRouter()
+router.register(r'users', HumanCreateView)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/', include('rest_framework.urls', 'rest_framework')),
     path('api/', include(match_urls, namespace='match')),
     path('api/', include(users_urls, namespace='users')),
 ]

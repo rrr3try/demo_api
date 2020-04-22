@@ -6,5 +6,5 @@ app_name = 'users'
 
 urlpatterns = [
     path('human/<int:pk>/', views.HumanDetailView.as_view(), name='detail'),
-    path('human/', views.HumanView.as_view(), name='operate'),
+    path('human/create/', views.HumanCreateView.as_view(), name='operate'),
 ]
